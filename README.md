@@ -2,6 +2,8 @@
 
 ## How to install
 
+Your system must own `lxc` , `nodejs` and `npm` packages.
+
 1. Git clone the repo in your local directory
 2. `npm install` in the repo directory
 
