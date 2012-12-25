@@ -91,13 +91,43 @@ app.get('/container', function(req,res){
     res.end(JSON.stringify(container))
 });
 
-/* User can provide id, or it return UUID one. */
-app.post('/container',function(req, res){
-    var container = req.body
-    var id = req.body.id
+app.put('/container', function(req, res){
+    var config = req.body
+    var id = config.id
     if(id == ""){ id = uuid.v4() }
-    container.id = id
 
+    var db = new Dirtle(path.join(__dirname, DBPATH )).db;
+
+    // Create new container.
+    if(! db.container[id])
+    {
+        var success = function()
+        {
+
+            res.writeHead(200, {'Content-Type': 'text/json'})
+            res.end(JSON.stringify("/container/"+id))
+        }
+
+        var failed = function()
+        {
+            res.writeHead(500, {'Content-Type': 'text/json'})
+            res.end(JSON.stringify({'error': "/container/"+id}))
+        }
+        createLXC(config, id, success, failed)     
+    }
+    else
+    {
+        // Update all container's configs.
+        // This method should not destroy old container, so it only for updating the meda-data and setting files.
+
+        // TODO: Settings.
+
+        db.container[id] = config
+    }
+});
+
+function createLXC(config,id,cb_s, cb_f)
+{
     // Do lxc create works.
     var spawn = require('child_process').spawn
     var lxc_create = spawn('lxc-create',['-t','ubuntu-cloud','-n',id])
@@ -118,20 +148,38 @@ app.post('/container',function(req, res){
         if( 0 == code )
         {
             var db = new Dirtle(path.join(__dirname, DBPATH )).db;
-            db.container[id] = container
-
-            res.writeHead(200, {'Content-Type': 'text/json'})
-            res.end(JSON.stringify("/container/"+id))
-
+            db.container[id] = config 
+            cb_s()
             console.log("[DEBUG] LXC had been created: "+id)
         }
         else
         {
-            res.writeHead(500, {'Content-Type': 'text/json'})
-            res.end(JSON.stringify({'error': "/container/"+id}))
+            cb_f()
         }
     })
 
+}
+
+/* User can provide id, or it return UUID one. */
+app.post('/container',function(req, res){
+    var config = req.body
+    var id = config.id
+    if(id == ""){ id = uuid.v4() }
+    config.id = id
+
+    var success = function()
+    {
+        res.writeHead(200, {'Content-Type': 'text/json'})
+        res.end(JSON.stringify("/container/"+id))
+    }
+
+    var failed = function()
+    {
+        res.writeHead(500, {'Content-Type': 'text/json'})
+        res.end(JSON.stringify({'error': "/container/"+id}))
+    }
+
+    createLXC(config, id, success, failed)
 });
 
 app.delete('/container/:id', function(req, res){
