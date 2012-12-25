@@ -2,6 +2,9 @@
   "name": "lxc-api",
   "version": "0.0.1",
   "dependencies": {
+    "node-uuid":"1.4.0",
+    "path": "0.4.9",
+    "dirtle":"0.0.1alphaomega",
     "express": "3.0",
     "ejs":"0.7.1",
     "websocket":"1.0.7"
